@@ -1,4 +1,6 @@
 import pygame
+import time
+
 pygame.init()
 screenWidh=1000
 screenHeight=1000
@@ -20,37 +22,39 @@ class Point:
        self.Y = posY
 
 class Board:
+    def __init__(self):
+        self.cleanBoard()
     points=[]
+    def cleanBoard(self):
+        self.points=[]
+        self.phaseOneCountDown=7
+        outerLine,midLine,innerLine=[],[],[]
+        for i in range(8):
+            if i < 3:
+                outerLine.append(Point(None, i*boardSize/2, 0))
+                midLine.append(Point(None, boardSize/6 + i*boardSize/3, boardSize/6))
+                innerLine.append(Point(None, boardSize/3 + i*boardSize/6, boardSize/3))
+            elif i < 5:
+                outerLine.append(Point(None, boardSize,(i-2)*boardSize/2))
+                midLine.append(Point(None, boardSize - boardSize/6, boardSize/6 + (i-2)*boardSize/3))
+                innerLine.append(Point(None, boardSize - boardSize/3, boardSize/3 + (i-2)*boardSize/6))
+            elif i < 7:
+                outerLine.append(Point(None, (6-i)*boardSize/2, boardSize))
+                midLine.append(Point(None, boardSize/6 + (6-i)*boardSize/3, boardSize - boardSize/6))
+                innerLine.append(Point(None, boardSize/3 + (6-i)*boardSize/6, boardSize - boardSize/3))
+            else:
+                outerLine.append(Point(None, 0, boardSize/2))
+                midLine.append(Point(None, boardSize/6, boardSize/2))
+                innerLine.append(Point(None, boardSize/3, boardSize/2))
+        self.points.extend([outerLine,midLine,innerLine])
 
-    outerLine=[]
-    midLine=[]
-    innerLine=[]
-    for i in range(8):
-        if i < 3:
-            outerLine.append(Point(None, i*boardSize/2, 0))
-            midLine.append(Point(None, boardSize/6 + i*boardSize/3, boardSize/6))
-            innerLine.append(Point(None, boardSize/3 + i*boardSize/6, boardSize/3))
-        elif i < 5:
-            outerLine.append(Point(None, boardSize,(i-2)*boardSize/2))
-            midLine.append(Point(None, boardSize - boardSize/6, boardSize/6 + (i-2)*boardSize/3))
-            innerLine.append(Point(None, boardSize - boardSize/3, boardSize/3 + (i-2)*boardSize/6))
-        elif i < 7:
-            outerLine.append(Point(None, (6-i)*boardSize/2, boardSize))
-            midLine.append(Point(None, boardSize/6 + (6-i)*boardSize/3, boardSize - boardSize/6))
-            innerLine.append(Point(None, boardSize/3 + (6-i)*boardSize/6, boardSize - boardSize/3))
-        else:
-            outerLine.append(Point(None, 0, boardSize/2))
-            midLine.append(Point(None, boardSize/6, boardSize/2))
-            innerLine.append(Point(None, boardSize/3, boardSize/2))
-
-    points.extend([outerLine,midLine,innerLine])
     def possibleMoves(self,point):
         boardIndex=-1
         lineIndex=-1
-        for subArr in self.points:
+        for index,subArr in enumerate(self.points):
             try:
                 lineIndex=subArr.index(point)
-                boardIndex=self.points.index(subArr)
+                boardIndex=index
                 break
             except:
                 continue
@@ -68,7 +72,7 @@ class Board:
         try:
             if lineIndex != 7 and self.points[boardIndex][lineIndex+1].owns == None:
                 possibleMoves.append(self.points[boardIndex][lineIndex+1])
-            elif self.points[boardIndex][0].owns == None:
+            elif self.points[boardIndex][0].owns == None and lineIndex == 7:
                 possibleMoves.append(self.points[boardIndex][0])
         except IndexError:
             pass
@@ -83,6 +87,57 @@ class Board:
             pass
         return possibleMoves
 
+    def freePoints(self):
+        returnThis=[]
+        for i in self.points:
+            for point in i:
+                if point.owns==None:
+                    returnThis.append(point)
+        return returnThis
+    
+    def playerPointsLen(self,playerTurn):
+        returnThis=[]
+        for i in self.points:
+            for point in i:
+                if point.owns==playerTurn:
+                    returnThis.append(point)
+        return len(returnThis)
+
+    def end_if_no_moves(self,playerTurn):
+        freeMoves=0
+        for i in self.points:
+            for point in i:
+                if point.owns==playerTurn:
+                    freeMoves+= len(self.possibleMoves(point))
+        if freeMoves==0 and not self.phaseOneCountDown:
+            print("Player %s has lost by having no more possible moves" % playerTurn)
+            time.sleep(0.4)
+            self.cleanBoard()
+            playerTurn=1
+        return playerTurn
+    def isMill(self,point):
+        boardIndex=-1
+        lineIndex=-1
+        for index,subArr in enumerate(self.points):
+            try:
+                lineIndex=subArr.index(point)
+                boardIndex=index
+                break
+            except:
+                continue
+            if lineindex % 2 == 1:
+                if self.points[0][lineIndex].owns == point.owns and self.points[1][lineIndex].owns == point.owns and self.points[2][lineIndex].owns == point.owns:
+                    return True
+            # for i in range(3
+            
+
+
+            
+
+
+                 
+
+
 running = True
 
 board = Board()
@@ -91,7 +146,6 @@ board = Board()
 clock = pygame.time.Clock()
 FPS= 20
 playerTurn=1
-phaseOneCountDown = 18
 focus=0
 moves=[]
 # GAME LOOP
@@ -100,30 +154,38 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        playerTurn = board.end_if_no_moves(playerTurn)
         if event.type == pygame.MOUSEBUTTONDOWN:
             mX,mY = pygame.mouse.get_pos()
             if focus:
                 for point in moves:
                     if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20:
-                        focus.owns=None
-                        point.owns=playerTurn
-                        playerTurn = playerTurn % 2 + 1
-                        focus = 0
-                        moves = []
-            
+                        try:
+                            focus.owns=None
+                            point.owns=playerTurn
+                            playerTurn = playerTurn % 2 + 1
+                            focus = 0
+                            moves = []
+                        except:
+                            pass
+
             for posBoard,i in enumerate(board.points):
                 for point in i:
                     # print(abs(mX-point.X),mX,mY)
                     if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20:
-                        if phaseOneCountDown and not point.owns:
+                        if board.phaseOneCountDown and not point.owns:
                             posLine=i.index(point)
                             point.owns = playerTurn
                             playerTurn = playerTurn % 2 + 1
-                            print(point.owns,i.index(point),posBoard,board.possibleMoves(point))
-                            phaseOneCountDown-=1
-                        elif not phaseOneCountDown and point.owns == playerTurn:
+                            # print(point.owns,i.index(point),posBoard,board.possibleMoves(point))
+                            board.phaseOneCountDown-=1
+                        elif not board.phaseOneCountDown and point.owns == playerTurn:
                             focus = point
-                            moves = board.possibleMoves(focus)
+                            moves = board.possibleMoves(focus) if board.playerPointsLen(playerTurn) != 3 else board.freePoints()
+                            print('-----')
+                            for i in moves:
+                                print(i.X,i.Y)
+            
                     
                             
                             
