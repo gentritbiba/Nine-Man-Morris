@@ -2,8 +2,8 @@ import pygame
 import time
 
 pygame.init()
-screenWidh=1000
-screenHeight=1000
+screenWidh=800
+screenHeight=800
 boardSize=600
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -27,7 +27,7 @@ class Board:
     points=[]
     def cleanBoard(self):
         self.points=[]
-        self.phaseOneCountDown=7
+        self.phaseOneCountDown=18
         outerLine,midLine,innerLine=[],[],[]
         for i in range(8):
             if i < 3:
@@ -125,10 +125,29 @@ class Board:
                 break
             except:
                 continue
-            if lineindex % 2 == 1:
-                if self.points[0][lineIndex].owns == point.owns and self.points[1][lineIndex].owns == point.owns and self.points[2][lineIndex].owns == point.owns:
+        if lineIndex % 2 == 1:
+            if self.points[0][lineIndex].owns == point.owns and self.points[1][lineIndex].owns == point.owns and self.points[2][lineIndex].owns == point.owns:
+                return True
+        i=int(lineIndex/2)*2
+        tempVal = i+2 if not i==6 else 0
+        print(i,tempVal)
+        if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
+            return True
+        i=int(lineIndex/3)*3
+        tempVal = i+2 if not i==6 else 0
+        print(i,tempVal)
+        if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
+            return True
+        if lineIndex % 2 == 0:
+                if lineIndex % 4 == 0:
+                    i = i-2 if lineIndex !=0 else 6
+                elif lineIndex != 6:
+                    i = i + 2
+                tempVal = i+2 if not i==6 else 0
+                if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
                     return True
-            # for i in range(3
+        return False
+
             
 
 
@@ -142,12 +161,12 @@ running = True
 
 board = Board()
 
-# print(board.points[1][7].X,board.points[1][7].Y)
 clock = pygame.time.Clock()
 FPS= 20
 playerTurn=1
 focus=0
 moves=[]
+mill=False
 # GAME LOOP
 while running:
     clock.tick(FPS)
@@ -157,13 +176,16 @@ while running:
         playerTurn = board.end_if_no_moves(playerTurn)
         if event.type == pygame.MOUSEBUTTONDOWN:
             mX,mY = pygame.mouse.get_pos()
+
             if focus:
                 for point in moves:
                     if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20:
                         try:
                             focus.owns=None
                             point.owns=playerTurn
-                            playerTurn = playerTurn % 2 + 1
+                            print(board.isMill(point))
+                            mill = board.isMill(point)
+                            playerTurn = playerTurn % 2 + 1 if not mill else playerTurn
                             focus = 0
                             moves = []
                         except:
@@ -171,28 +193,33 @@ while running:
 
             for posBoard,i in enumerate(board.points):
                 for point in i:
-                    # print(abs(mX-point.X),mX,mY)
-                    if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20:
-                        if board.phaseOneCountDown and not point.owns:
-                            posLine=i.index(point)
-                            point.owns = playerTurn
+                    if mill:
+                        if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20 and point.owns == playerTurn % 2 + 1 and not board.isMill(point):
+                            point.owns=None
                             playerTurn = playerTurn % 2 + 1
-                            # print(point.owns,i.index(point),posBoard,board.possibleMoves(point))
-                            board.phaseOneCountDown-=1
-                        elif not board.phaseOneCountDown and point.owns == playerTurn:
-                            focus = point
-                            moves = board.possibleMoves(focus) if board.playerPointsLen(playerTurn) != 3 else board.freePoints()
-                            print('-----')
-                            for i in moves:
-                                print(i.X,i.Y)
+                            mill = False
+                            if board.playerPointsLen(playerTurn) == 2 and not board.phaseOneCountDown:
+                                print('Player %s lost because it went out of circles')
+                                board.cleanBoard()
+
+                    else:    
+                        if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20:
+                            if board.phaseOneCountDown and not point.owns:
+                                posLine=i.index(point)
+                                point.owns = playerTurn
+                                print(board.isMill(point))
+                                mill = board.isMill(point)
+                                playerTurn = playerTurn % 2 + 1 if not mill else playerTurn
+                                board.phaseOneCountDown-=1
+                            elif not board.phaseOneCountDown and point.owns == playerTurn:
+                                focus = point
+                                moves = board.possibleMoves(focus) if board.playerPointsLen(playerTurn) != 3 else board.freePoints()
             
                     
                             
                             
             
     screen.fill((255, 255, 255))
-    # pygame.draw.circle(screen, BLACK, (100, 100), 100 ,1)
-    #pygame.draw.line(screen, BLACK, ((screenWidh-boardSize)/2, screenWidh/2), ((screenHeight-boardSize)/2, screenHeight/2))
     pygame.draw.line(screen, BLACK, (screenWidh/2, (screenWidh-boardSize)/2), (screenWidh/2, screenHeight-(screenHeight-boardSize)/2))
     pygame.draw.line(screen, BLACK, ((screenHeight-boardSize)/2, screenHeight/2), (screenWidh-(screenWidh-boardSize)/2, screenHeight/2))
 
@@ -200,9 +227,6 @@ while running:
     pygame.draw.rect(screen, BLACK, ((screenWidh-boardSize*2/3)/2, (screenHeight-boardSize*2/3)/2, boardSize*2/3, boardSize*2/3), 1)
     pygame.draw.rect(screen, BLACK, ((screenWidh-boardSize/3)/2, (screenHeight-boardSize/3)/2, boardSize/3, boardSize/3))
     pygame.draw.rect(screen, (255, 255, 255), ((screenWidh-boardSize/3)/2+1, (screenHeight-boardSize/3)/2+1, boardSize/3-2, boardSize/3-2))
-    # for i in board.points:
-    #     for j in i:
-    #         pygame.draw.circle(screen, BLACK, ((screen-boardSize)/2 + j['posX'] ,(screen-boardSize)/2 + j['posy'] ), 5 ,1)
     for i in board.points:
         for point in i:
             if not point.owns:
