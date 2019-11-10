@@ -133,11 +133,12 @@ class Board:
         print(i,tempVal)
         if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
             return True
-        i=int(lineIndex/3)*3
-        tempVal = i+2 if not i==6 else 0
-        print(i,tempVal)
-        if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
-            return True
+        if lineIndex%2==0:
+            i=int(lineIndex/3)*3
+            tempVal = i+2 if not i==6 else 0
+            print(i,tempVal)
+            if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
+                return True
         if lineIndex % 2 == 0:
                 if lineIndex % 4 == 0:
                     i = i-2 if lineIndex !=0 else 6
@@ -167,6 +168,7 @@ playerTurn=1
 focus=0
 moves=[]
 mill=False
+points_not_in_mill=[]
 # GAME LOOP
 while running:
     clock.tick(FPS)
@@ -190,11 +192,19 @@ while running:
                             moves = []
                         except:
                             pass
-
+            if mill:
+                points_not_in_mill=[]
+                for posBoard,i in enumerate(board.points):
+                    for point in i:
+                        if not board.isMill(point) and point.owns== playerTurn % 2 +1:
+                            points_not_in_mill.append(point)
+                print(len(points_not_in_mill))
             for posBoard,i in enumerate(board.points):
                 for point in i:
                     if mill:
-                        if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20 and point.owns == playerTurn % 2 + 1 and not board.isMill(point):
+                        
+                        if abs(mX - point.X - (screenWidh-boardSize)/2)<=20 and abs(mY-(screenWidh-boardSize)/2 - point.Y)<=20 and point.owns == playerTurn % 2 + 1 and ( not board.isMill(point) or len(points_not_in_mill)==0):
+                            print(len(points_not_in_mill))
                             point.owns=None
                             playerTurn = playerTurn % 2 + 1
                             mill = False
