@@ -240,7 +240,7 @@ while running:
     for i in board.points:
         for point in i:
             if not point.owns:
-                pygame.draw.circle(screen, GRAY, (int((screenWidh-boardSize)/2 + point.X) ,int((screenHeight-boardSize)/2 + point.Y) ), 4 + 4 * ([point.X,point.Y] in moves))
+                pygame.draw.circle(screen, GRAY, (int((screenWidh-boardSize)/2 + point.X) ,int((screenHeight-boardSize)/2 + point.Y) ), 4 + 4 * (point in moves))
             elif point.owns == 1:
                 pygame.draw.circle(screen, BLACK, (int((screenWidh-boardSize)/2 + point.X) ,int((screenHeight-boardSize)/2 + point.Y) ), 20 + 10 * (focus and point == focus))
             elif point.owns == 2:
