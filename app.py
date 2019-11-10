@@ -133,17 +133,14 @@ class Board:
         print(i,tempVal)
         if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
             return True
-        if lineIndex%2==0:
+        if lineIndex%2==0 and lineIndex != 2:
             i=int(lineIndex/3)*3
             tempVal = i+2 if not i==6 else 0
             print(i,tempVal)
             if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
                 return True
         if lineIndex % 2 == 0:
-                if lineIndex % 4 == 0:
-                    i = i-2 if lineIndex !=0 else 6
-                elif lineIndex != 6:
-                    i = i + 2
+                i = i-2 if lineIndex !=0 else 6
                 tempVal = i+2 if not i==6 else 0
                 if self.points[boardIndex][i].owns == point.owns and self.points[boardIndex][i+1].owns == point.owns and self.points[boardIndex][tempVal].owns == point.owns:
                     return True
@@ -163,7 +160,7 @@ running = True
 board = Board()
 
 clock = pygame.time.Clock()
-FPS= 20
+FPS= 30
 playerTurn=1
 focus=0
 moves=[]
@@ -176,6 +173,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         playerTurn = board.end_if_no_moves(playerTurn)
+        if event.type == pygame.KEYDOWN:
+            if event.key== pygame.K_r:    
+                board.cleanBoard()
         if event.type == pygame.MOUSEBUTTONDOWN:
             mX,mY = pygame.mouse.get_pos()
 
@@ -209,7 +209,7 @@ while running:
                             playerTurn = playerTurn % 2 + 1
                             mill = False
                             if board.playerPointsLen(playerTurn) == 2 and not board.phaseOneCountDown:
-                                print('Player %s lost because it went out of circles')
+                                print('Player %s lost because it went out of circles' % playerTurn % 2 + 1)
                                 board.cleanBoard()
 
                     else:    
@@ -249,4 +249,3 @@ while running:
 
 
     pygame.display.update()
-
