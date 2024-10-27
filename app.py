@@ -29,23 +29,32 @@ class Board:
         self.points=[]
         self.phaseOneCountDown=18
         outerLine,midLine,innerLine=[],[],[]
+                # Define the coordinates for each line
+        outer_coords = [
+            (0, 0), (boardSize / 2, 0), (boardSize, 0), 
+            (boardSize, boardSize / 2), (boardSize, boardSize), (boardSize / 2, boardSize), 
+            (0, boardSize), (0, boardSize / 2)
+        ]
+        
+        mid_coords = [
+            (boardSize / 6, boardSize / 6), (boardSize / 2, boardSize / 6), (boardSize - boardSize / 6, boardSize / 6),
+            (boardSize - boardSize / 6, boardSize / 2),
+            (boardSize - boardSize / 6, boardSize - boardSize / 6), (boardSize / 2, boardSize - boardSize / 6), (boardSize / 6, boardSize - boardSize / 6),
+            (boardSize / 6, boardSize / 2)
+        ]
+        
+        inner_coords = [
+            (boardSize / 3, boardSize / 3), (boardSize / 2, boardSize / 3), (boardSize - boardSize / 3, boardSize / 3),
+            (boardSize - boardSize / 3, boardSize / 2),
+            (boardSize - boardSize / 3, boardSize - boardSize / 3), (boardSize / 2, boardSize - boardSize / 3), (boardSize / 3, boardSize - boardSize / 3),
+            (boardSize / 3, boardSize / 2)
+        ]
+        
+        # Append points to the lines
         for i in range(8):
-            if i < 3:
-                outerLine.append(Point(None, i*boardSize/2, 0))
-                midLine.append(Point(None, boardSize/6 + i*boardSize/3, boardSize/6))
-                innerLine.append(Point(None, boardSize/3 + i*boardSize/6, boardSize/3))
-            elif i < 5:
-                outerLine.append(Point(None, boardSize,(i-2)*boardSize/2))
-                midLine.append(Point(None, boardSize - boardSize/6, boardSize/6 + (i-2)*boardSize/3))
-                innerLine.append(Point(None, boardSize - boardSize/3, boardSize/3 + (i-2)*boardSize/6))
-            elif i < 7:
-                outerLine.append(Point(None, (6-i)*boardSize/2, boardSize))
-                midLine.append(Point(None, boardSize/6 + (6-i)*boardSize/3, boardSize - boardSize/6))
-                innerLine.append(Point(None, boardSize/3 + (6-i)*boardSize/6, boardSize - boardSize/3))
-            else:
-                outerLine.append(Point(None, 0, boardSize/2))
-                midLine.append(Point(None, boardSize/6, boardSize/2))
-                innerLine.append(Point(None, boardSize/3, boardSize/2))
+            outerLine.append(Point(None, *outer_coords[i]))
+            midLine.append(Point(None, *mid_coords[i]))
+            innerLine.append(Point(None, *inner_coords[i]))
         self.points.extend([outerLine,midLine,innerLine])
 
     def possibleMoves(self,point):
@@ -150,9 +159,6 @@ class Board:
 
 
             
-
-
-                 
 
 
 running = True
